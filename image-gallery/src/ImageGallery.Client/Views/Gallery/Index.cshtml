@@ -1,0 +1,22 @@
+﻿@model ImageGallery.Client.Models.GalleryIndexViewModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container">
+    <div class="row">
+        @foreach (var image in Model.Images)
+        {
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                <div class="card">
+                    <img class="card-img-top" src="@("https://localhost:5001/images/" + image.FileName)"/>
+                    <div class="card-body">
+                        <h5 class="card-title">@image.Title</h5>
+                        <a class="card-link" asp-action="EditImage" asp-controller="Gallery" asp-route-id="@image.Id">Edit title</a>
+                        <a class="card-link" asp-action="DeleteImage" asp-controller="Gallery" asp-route-id="@image.Id">Delete image</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

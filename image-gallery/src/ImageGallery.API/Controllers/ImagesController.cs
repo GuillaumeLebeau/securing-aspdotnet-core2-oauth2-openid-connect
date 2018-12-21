@@ -83,7 +83,7 @@ namespace ImageGallery.API.Controllers
             string fileName = Guid.NewGuid() + ".jpg";
             
             // the full file path
-            var filePath = Path.Combine(webRootPath, "images", fileName);
+            var filePath = Path.Combine(webRootPath, "wwwroot/images", fileName);
 
             // write bytes and auto-close stream
             System.IO.File.WriteAllBytes(filePath, imageForCreation.Bytes);

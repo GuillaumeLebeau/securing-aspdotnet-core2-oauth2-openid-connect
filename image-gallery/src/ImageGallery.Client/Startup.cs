@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ImageGallery.Client.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -33,6 +34,19 @@ namespace ImageGallery.Client
 
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            
+            // register an IHttpContextAccessor so we can access the current
+            // HttpContext in services by injecting it
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+            // register an IImageGalleryApiClient
+//            services.AddHttpClient<IImageGalleryApiClient, ImageGalleryApiClient>(client =>
+//            {
+//                client.BaseAddress = new Uri(Configuration.GetValue<string>("ImageGalleryApiUrl"));
+//                client.Timeout = TimeSpan.FromMinutes(1);
+//            });
+            services.AddScoped<IImageGalleryApiClient>(_ =>
+                new ImageGalleryApiClient(Configuration.GetValue<string>("ImageGalleryApiUrl")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -57,7 +71,7 @@ namespace ImageGallery.Client
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                    template: "{controller=Gallery}/{action=Index}/{id?}");
             });
         }
     }
