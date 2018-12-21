@@ -1,4 +1,6 @@
-﻿using ImageGallery.API.Entities;
+﻿using AutoMapper;
+using ImageGallery.API.Entities;
+using ImageGallery.API.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +26,12 @@ namespace ImageGallery.API
 
             var connection = Configuration.GetConnectionString("ImageGalleryDBConnectionString");
             services.AddDbContext<GalleryContext>(o => o.UseSqlServer(connection));
+            
+            // register the repository
+            services.AddScoped<IGalleryRepository, GalleryRepository>();
+            
+            // register AutoMapper
+            services.AddAutoMapper();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -38,7 +46,9 @@ namespace ImageGallery.API
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
+            
+            app.UseStaticFiles();
+            
             app.UseHttpsRedirection();
             app.UseMvc();
         }
