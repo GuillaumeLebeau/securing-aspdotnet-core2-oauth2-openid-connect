@@ -34,19 +34,32 @@ namespace ImageGallery.Client
 
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            
+
             // register an IHttpContextAccessor so we can access the current
             // HttpContext in services by injecting it
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             // register an IImageGalleryApiClient
-//            services.AddHttpClient<IImageGalleryApiClient, ImageGalleryApiClient>(client =>
-//            {
-//                client.BaseAddress = new Uri(Configuration.GetValue<string>("ImageGalleryApiUrl"));
-//                client.Timeout = TimeSpan.FromMinutes(1);
-//            });
             services.AddScoped<IImageGalleryApiClient>(_ =>
                 new ImageGalleryApiClient(Configuration.GetValue<string>("ImageGalleryApiUrl")));
+
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = "Cookies";
+                    options.DefaultChallengeScheme = "oidc";
+                }).AddCookie("Cookies")
+                .AddOpenIdConnect("oidc", options =>
+                {
+                    options.SignInScheme = "Cookies";
+                    options.Authority = "https://localhost:5005";
+                    options.ClientId = "imagegalleryclient";
+                    options.ResponseType = "code id_token";
+                    //options.CallbackPath = new PathString("...");
+                    options.Scope.Add("openid");
+                    options.Scope.Add("profile");
+                    options.SaveTokens = true;
+                    options.ClientSecret = "secret";
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -64,6 +77,9 @@ namespace ImageGallery.Client
             }
 
             app.UseHttpsRedirection();
+
+            app.UseAuthentication();
+            
             app.UseStaticFiles();
             app.UseCookiePolicy();
 
