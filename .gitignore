@@ -388,8 +388,15 @@ paket-files/
 .fake/
 
 # JetBrains Rider
-.idea/
+#.idea/
 *.sln.iml
+**/.idea/**/riderModule.iml
+**/.idea/**/contentModel.xml
+**/.idea/**/.name
+**/.idea/**/encodings.xml
+**/.idea/**/misc.xml
+**/.idea/**/modules.xml
+**/.idea/**/workspace.xml
 
 # CodeRush personal settings
 .cr/personal
