@@ -440,3 +440,5 @@ ASALocalRun/
 .localhistory/
 
 # End of https://www.gitignore.io/api/jetbrains,visualstudio,visualstudiocode
+
+!image-gallery/src/Marvin.IDP/wwwroot/lib/
