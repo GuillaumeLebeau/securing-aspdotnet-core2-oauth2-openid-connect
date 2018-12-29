@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ImageGallery.Client.Services;
+﻿using ImageGallery.Client.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,7 +49,8 @@ namespace ImageGallery.Client
                     options.Authority = "https://localhost:5005";
                     options.ClientId = "imagegalleryclient";
                     options.ResponseType = "code id_token";
-                    //options.CallbackPath = new PathString("...");
+//                    options.CallbackPath = new PathString("...");
+//                    options.SignedOutCallbackPath = new PathString("...");
                     options.Scope.Add("openid");
                     options.Scope.Add("profile");
                     options.SaveTokens = true;

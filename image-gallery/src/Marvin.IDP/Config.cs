@@ -54,6 +54,10 @@ namespace Marvin.IDP
                 {
                     "https://localhost:5003/signin-oidc"
                 },
+                PostLogoutRedirectUris = new List<string>
+                {
+                    "https://localhost:5003/signout-callback-oidc"
+                },
                 AllowedScopes =
                 {
                     IdentityServerConstants.StandardScopes.OpenId,
