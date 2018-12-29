@@ -441,4 +441,7 @@ ASALocalRun/
 
 # End of https://www.gitignore.io/api/jetbrains,visualstudio,visualstudiocode
 
-!image-gallery/src/Marvin.IDP/wwwroot/lib/
+!**/src/**/wwwroot/lib/
+**/.idea/**/inspectionProfiles/
+**/.idea/**/markdown-navigator.xml
+**/.idea/**/markdown-navigator/
