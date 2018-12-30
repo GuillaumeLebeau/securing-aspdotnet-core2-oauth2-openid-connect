@@ -1,4 +1,5 @@
-﻿using ImageGallery.Client.Services;
+﻿using System.IdentityModel.Tokens.Jwt;
+using ImageGallery.Client.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +14,7 @@ namespace ImageGallery.Client
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
         }
 
         public IConfiguration Configuration { get; }
@@ -26,7 +28,6 @@ namespace ImageGallery.Client
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
-
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
@@ -49,8 +50,8 @@ namespace ImageGallery.Client
                     options.Authority = "https://localhost:5005";
                     options.ClientId = "imagegalleryclient";
                     options.ResponseType = "code id_token";
-//                    options.CallbackPath = new PathString("...");
-//                    options.SignedOutCallbackPath = new PathString("...");
+                    //options.CallbackPath = new PathString("...");
+                    //options.SignedOutCallbackPath = new PathString("...");
                     options.Scope.Add("openid");
                     options.Scope.Add("profile");
                     options.SaveTokens = true;
