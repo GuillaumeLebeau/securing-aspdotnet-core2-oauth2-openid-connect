@@ -388,8 +388,15 @@ paket-files/
 .fake/
 
 # JetBrains Rider
-.idea/
+#.idea/
 *.sln.iml
+**/.idea/**/riderModule.iml
+**/.idea/**/contentModel.xml
+**/.idea/**/.name
+**/.idea/**/encodings.xml
+**/.idea/**/misc.xml
+**/.idea/**/modules.xml
+**/.idea/**/workspace.xml
 
 # CodeRush personal settings
 .cr/personal
@@ -433,3 +440,8 @@ ASALocalRun/
 .localhistory/
 
 # End of https://www.gitignore.io/api/jetbrains,visualstudio,visualstudiocode
+
+!**/src/**/wwwroot/lib/
+**/.idea/**/inspectionProfiles/
+**/.idea/**/markdown-navigator.xml
+**/.idea/**/markdown-navigator/

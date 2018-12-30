@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ImageGallery.Client.Services;
+﻿using ImageGallery.Client.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,19 +29,34 @@ namespace ImageGallery.Client
 
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            
+
             // register an IHttpContextAccessor so we can access the current
             // HttpContext in services by injecting it
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             // register an IImageGalleryApiClient
-//            services.AddHttpClient<IImageGalleryApiClient, ImageGalleryApiClient>(client =>
-//            {
-//                client.BaseAddress = new Uri(Configuration.GetValue<string>("ImageGalleryApiUrl"));
-//                client.Timeout = TimeSpan.FromMinutes(1);
-//            });
             services.AddScoped<IImageGalleryApiClient>(_ =>
                 new ImageGalleryApiClient(Configuration.GetValue<string>("ImageGalleryApiUrl")));
+
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = "Cookies";
+                    options.DefaultChallengeScheme = "oidc";
+                }).AddCookie("Cookies")
+                .AddOpenIdConnect("oidc", options =>
+                {
+                    options.SignInScheme = "Cookies";
+                    options.Authority = "https://localhost:5005";
+                    options.ClientId = "imagegalleryclient";
+                    options.ResponseType = "code id_token";
+//                    options.CallbackPath = new PathString("...");
+//                    options.SignedOutCallbackPath = new PathString("...");
+                    options.Scope.Add("openid");
+                    options.Scope.Add("profile");
+                    options.SaveTokens = true;
+                    options.ClientSecret = "secret";
+                    options.GetClaimsFromUserInfoEndpoint = true;
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -64,6 +74,9 @@ namespace ImageGallery.Client
             }
 
             app.UseHttpsRedirection();
+
+            app.UseAuthentication();
+            
             app.UseStaticFiles();
             app.UseCookiePolicy();
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Security.Claims;
+using IdentityServer4;
 using IdentityServer4.Models;
 using IdentityServer4.Test;
 
@@ -44,7 +45,26 @@ namespace Marvin.IDP
 
         public static IEnumerable<Client> GetClients()
         {
-            yield break;
+            yield return new Client
+            {
+                ClientName = "Image Gallery",
+                ClientId = "imagegalleryclient",
+                AllowedGrantTypes = GrantTypes.Hybrid,
+                RedirectUris = new List<string>
+                {
+                    "https://localhost:5003/signin-oidc"
+                },
+                PostLogoutRedirectUris = new List<string>
+                {
+                    "https://localhost:5003/signout-callback-oidc"
+                },
+                AllowedScopes =
+                {
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile
+                },
+                ClientSecrets = {new Secret("secret".Sha256())}
+            };
         }
     }
 }
