@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System;
+using System.IdentityModel.Tokens.Jwt;
 using ImageGallery.Client.Services;
 
 using Microsoft.AspNetCore.Authentication;
@@ -40,6 +41,11 @@ namespace ImageGallery.Client
             // register an IImageGalleryApiClient
             services.AddScoped<IImageGalleryApiClient>(_ =>
                 new ImageGalleryApiClient(Configuration.GetValue<string>("ImageGalleryApiUrl")));
+
+            // register a few required services, one of which will be an implementation of IHttpClientFactory
+            services.AddHttpClient(
+                "idp_client",
+                client => client.BaseAddress = new Uri(Configuration.GetValue<string>("IdpUrl")));
 
             services.AddAuthentication(options =>
                 {

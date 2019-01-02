@@ -2,10 +2,15 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+
+using IdentityModel.Client;
+
 using ImageGallery.Client.Models;
 using ImageGallery.Client.Services;
 using ImageGallery.Model;
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,16 +22,19 @@ namespace ImageGallery.Client.Controllers
     public class GalleryController : Controller
     {
         private readonly IImageGalleryApiClient _imageGalleryApiClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public GalleryController(IImageGalleryApiClient imageGalleryApiClient)
+        public GalleryController(IImageGalleryApiClient imageGalleryApiClient,
+            IHttpClientFactory httpClientFactory)
         {
             _imageGalleryApiClient = imageGalleryApiClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<IActionResult> Index()
         {
             await WriteOutIdentityInformation();
-            
+
             var images = await _imageGalleryApiClient.GetImages().ConfigureAwait(false);
             var galleryIndexViewModel = new GalleryIndexViewModel(images);
             return View(galleryIndexViewModel);
@@ -40,11 +48,7 @@ namespace ImageGallery.Client.Controllers
         public async Task<IActionResult> EditImage(Guid id)
         {
             var image = await _imageGalleryApiClient.GetImage(id).ConfigureAwait(false);
-            var editImageViewModel = new EditImageViewModel
-            {
-                Id = image.Id,
-                Title = image.Title
-            };
+            var editImageViewModel = new EditImageViewModel {Id = image.Id, Title = image.Title};
 
             return View(editImageViewModel);
         }
@@ -110,8 +114,30 @@ namespace ImageGallery.Client.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel
-                {RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier});
+            return View(
+                new ErrorViewModel
+                {
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                });
+        }
+
+        public async Task<IActionResult> OrderFrame()
+        {
+            var client = _httpClientFactory.CreateClient("idp_client");
+
+            var disco = await client.GetDiscoveryDocumentAsync();
+            if (disco.IsError) throw new Exception(disco.Error, disco.Exception);
+            
+            var accessToken =
+                await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
+
+            var response = await client.GetUserInfoAsync(
+                new UserInfoRequest {Address = disco.UserInfoEndpoint, Token = accessToken});
+
+            if (response.IsError) throw new Exception(response.Error, response.Exception);
+
+            var address = response.Claims.FirstOrDefault(c => c.Type == "address")?.Value;
+            return View(new OrderFrameViewModel(address));
         }
 
         private async Task WriteOutIdentityInformation()
