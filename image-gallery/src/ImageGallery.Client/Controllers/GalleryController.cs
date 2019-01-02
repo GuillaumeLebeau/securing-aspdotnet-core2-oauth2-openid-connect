@@ -2,8 +2,11 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+
+using Flurl.Http;
 
 using IdentityModel.Client;
 
@@ -35,9 +38,18 @@ namespace ImageGallery.Client.Controllers
         {
             await WriteOutIdentityInformation();
 
-            var images = await _imageGalleryApiClient.GetImages().ConfigureAwait(false);
-            var galleryIndexViewModel = new GalleryIndexViewModel(images);
-            return View(galleryIndexViewModel);
+            try
+            {
+                var images = await _imageGalleryApiClient.GetImages().ConfigureAwait(false);
+                var galleryIndexViewModel = new GalleryIndexViewModel(images);
+                return View(galleryIndexViewModel);
+            }
+            catch (FlurlHttpException httpException) when (httpException.Call.HttpStatus.HasValue &&
+                                                           httpException.Call.HttpStatus.Value ==
+                                                           HttpStatusCode.Unauthorized)
+            {
+                return RedirectToAction("AccessDenied", "Authorization");
+            }
         }
 
         public IActionResult Privacy()
