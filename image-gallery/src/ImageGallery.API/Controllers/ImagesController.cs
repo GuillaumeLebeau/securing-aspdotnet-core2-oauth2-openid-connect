@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Security.Claims;
+
 using AutoMapper;
 using ImageGallery.API.Services;
 using ImageGallery.Model;
@@ -31,8 +34,10 @@ namespace ImageGallery.API.Controllers
         [HttpGet]
         public IActionResult GetImages()
         {
+            var ownerId = User.FindFirstValue("sub");
+            
             // get from repo
-            var imagesFromRepo = _galleryRepository.GetImages();
+            var imagesFromRepo = _galleryRepository.GetImages(ownerId);
 
             // map to model
             var imagesToReturn = _mapper.Map<IEnumerable<Image>>(imagesFromRepo);
@@ -146,7 +151,7 @@ namespace ImageGallery.API.Controllers
             if (!ModelState.IsValid)
             {
                 // return 422 - Unprocessable Entity when validation fails
-                return new UnprocessableEntityObjectResult(ModelState);
+                return UnprocessableEntity(ModelState);
             }
 
             var imageFromRepo = _galleryRepository.GetImage(id);
