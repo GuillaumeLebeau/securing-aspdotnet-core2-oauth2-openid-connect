@@ -1,4 +1,7 @@
 ﻿using AutoMapper;
+
+using IdentityServer4.AccessTokenValidation;
+
 using ImageGallery.API.Entities;
 using ImageGallery.API.Services;
 using Microsoft.AspNetCore.Builder;
@@ -24,6 +27,15 @@ namespace ImageGallery.API
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+                .AddIdentityServerAuthentication(
+                    options =>
+                    {
+                        options.Authority = Configuration.GetValue<string>("IdpUrl");
+                        options.ApiName = "imagegalleryapi";
+                    });
+            
+
             var connection = Configuration.GetConnectionString("ImageGalleryDBConnectionString");
             services.AddDbContext<GalleryContext>(o => o.UseSqlServer(connection));
             
@@ -48,6 +60,9 @@ namespace ImageGallery.API
             }
             
             app.UseHttpsRedirection();
+
+            app.UseAuthentication();
+            
             app.UseStaticFiles();
             app.UseMvc();
         }

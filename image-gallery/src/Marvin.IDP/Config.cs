@@ -49,6 +49,12 @@ namespace Marvin.IDP
             yield return new IdentityResource("roles", "Your role(s)", new[] {"role"});
         }
 
+        // api-related resources (scopes)
+        public static IEnumerable<ApiResource> GetApiResources()
+        {
+            yield return new ApiResource("imagegalleryapi", "Image Gallery API");
+        }
+
         public static IEnumerable<Client> GetClients()
         {
             yield return new Client
@@ -69,7 +75,8 @@ namespace Marvin.IDP
                     IdentityServerConstants.StandardScopes.OpenId,
                     IdentityServerConstants.StandardScopes.Profile,
                     IdentityServerConstants.StandardScopes.Address,
-                    "roles"
+                    "roles",
+                    "imagegalleryapi"
                 },
                 ClientSecrets = {new Secret("secret".Sha256())}
             };
