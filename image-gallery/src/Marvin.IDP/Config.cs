@@ -21,7 +21,8 @@ namespace Marvin.IDP
                     {
                         new Claim("given_name", "Frank"),
                         new Claim("family_name", "Underwood"),
-                        new Claim("address", "Main Road 1")
+                        new Claim("address", "Main Road 1"),
+                        new Claim("role", "FreeUser")
                     }
                 },
                 new TestUser
@@ -33,7 +34,8 @@ namespace Marvin.IDP
                     {
                         new Claim("given_name", "Claire"),
                         new Claim("family_name", "Underwood"),
-                        new Claim("address", "Big Street 2")
+                        new Claim("address", "Big Street 2"),
+                        new Claim("role", "PayingUser")
                     }
                 }
             };
@@ -44,6 +46,7 @@ namespace Marvin.IDP
             yield return new IdentityResources.OpenId();
             yield return new IdentityResources.Profile();
             yield return new IdentityResources.Address();
+            yield return new IdentityResource("roles", "Your role(s)", new[] {"role"});
         }
 
         public static IEnumerable<Client> GetClients()
@@ -65,7 +68,8 @@ namespace Marvin.IDP
                 {
                     IdentityServerConstants.StandardScopes.OpenId,
                     IdentityServerConstants.StandardScopes.Profile,
-                    IdentityServerConstants.StandardScopes.Address
+                    IdentityServerConstants.StandardScopes.Address,
+                    "roles"
                 },
                 ClientSecrets = {new Secret("secret".Sha256())}
             };
