@@ -42,9 +42,11 @@ namespace ImageGallery.Client
             // HttpContext in services by injecting it
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
+            services.AddSingleton(
+                Configuration.GetSection("ImageGalleryApi").Get<ImageGalleryApiClientSettings>());
+
             // register an IImageGalleryApiClient
-            services.AddScoped<IImageGalleryApiClient>(_ =>
-                new ImageGalleryApiClient(Configuration.GetValue<string>("ImageGalleryApiUrl")));
+            services.AddScoped<IImageGalleryApiClient, ImageGalleryApiClient>();
 
             // register a few required services, one of which will be an implementation of IHttpClientFactory
             services.AddHttpClient(
