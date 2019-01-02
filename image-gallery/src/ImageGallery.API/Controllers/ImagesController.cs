@@ -64,6 +64,7 @@ namespace ImageGallery.API.Controllers
 
         // POST api/images
         [HttpPost]
+        [Authorize(Roles = "PayingUser")]
         public IActionResult CreateImage([FromBody] ImageForCreation imageForCreation)
         {
             if (imageForCreation == null)
@@ -102,6 +103,10 @@ namespace ImageGallery.API.Controllers
             // ownerId should be set - can't save image in starter solution, will
             // be fixed during the course
             //imageEntity.OwnerId = ...;
+            
+            // set the ownerId on the imageEntity
+            var ownerId = User.FindFirstValue("sub");
+            imageEntity.OwnerId = ownerId;
 
             // add and save.  
             _galleryRepository.AddImage(imageEntity);
