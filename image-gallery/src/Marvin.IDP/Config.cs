@@ -52,7 +52,7 @@ namespace Marvin.IDP
         // api-related resources (scopes)
         public static IEnumerable<ApiResource> GetApiResources()
         {
-            yield return new ApiResource("imagegalleryapi", "Image Gallery API");
+            yield return new ApiResource("imagegalleryapi", "Image Gallery API", new[] {"role"});
         }
 
         public static IEnumerable<Client> GetClients()
