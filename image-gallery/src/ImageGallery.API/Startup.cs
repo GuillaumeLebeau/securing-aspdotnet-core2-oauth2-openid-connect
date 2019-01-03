@@ -48,6 +48,7 @@ namespace ImageGallery.API
                     {
                         options.Authority = Configuration.GetValue<string>("IdpUrl");
                         options.ApiName = "imagegalleryapi";
+                        options.ApiSecret = "apisecret";
                     });
             
 

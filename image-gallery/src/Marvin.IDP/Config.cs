@@ -53,16 +53,23 @@ namespace Marvin.IDP
             yield return new IdentityResources.Address();
             yield return new IdentityResource("roles", "Your role(s)", new[] {"role"});
             yield return new IdentityResource(
-                "country", "The country you're living in", new[] {"country"});
+                "country",
+                "The country you're living in",
+                new[] {"country"});
 
             yield return new IdentityResource(
-                "subscriptionlevel", "Your subscription level", new[] {"subscriptionlevel"});
+                "subscriptionlevel",
+                "Your subscription level",
+                new[] {"subscriptionlevel"});
         }
 
         // api-related resources (scopes)
         public static IEnumerable<ApiResource> GetApiResources()
         {
-            yield return new ApiResource("imagegalleryapi", "Image Gallery API", new[] {"role"});
+            yield return new ApiResource("imagegalleryapi", "Image Gallery API", new[] {"role"})
+            {
+                ApiSecrets = {new Secret("apisecret".Sha256())}
+            };
         }
 
         public static IEnumerable<Client> GetClients()
@@ -72,6 +79,7 @@ namespace Marvin.IDP
                 ClientName = "Image Gallery",
                 ClientId = "imagegalleryclient",
                 AllowedGrantTypes = GrantTypes.Hybrid,
+                AccessTokenType = AccessTokenType.Reference,
                 //IdentityTokenLifetime = ...
                 //AuthorizationCodeLifetime = = ...
                 AccessTokenLifetime = 120,
