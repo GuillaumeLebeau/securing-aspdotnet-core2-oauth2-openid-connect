@@ -30,7 +30,7 @@ namespace ImageGallery.API.Migrations
 
                     b.Property<string>("OwnerId")
                         .IsRequired()
-                        .HasMaxLength(50);
+                        .HasMaxLength(100);
 
                     b.Property<string>("Title")
                         .IsRequired()

@@ -17,7 +17,7 @@ namespace ImageGallery.API.Entities
         public string FileName { get; set; }
 
         [Required]
-        [MaxLength(50)]
+        [MaxLength(100)]
         public string OwnerId { get; set; }
     }
 }

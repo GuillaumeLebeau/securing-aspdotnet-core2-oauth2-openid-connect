@@ -14,7 +14,7 @@ namespace ImageGallery.API.Migrations
                     Id = table.Column<Guid>(nullable: false),
                     Title = table.Column<string>(maxLength: 150, nullable: false),
                     FileName = table.Column<string>(maxLength: 200, nullable: false),
-                    OwnerId = table.Column<string>(maxLength: 50, nullable: false)
+                    OwnerId = table.Column<string>(maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
