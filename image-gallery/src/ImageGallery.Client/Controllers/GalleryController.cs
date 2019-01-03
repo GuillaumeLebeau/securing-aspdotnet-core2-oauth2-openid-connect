@@ -44,9 +44,9 @@ namespace ImageGallery.Client.Controllers
                 var galleryIndexViewModel = new GalleryIndexViewModel(images);
                 return View(galleryIndexViewModel);
             }
-            catch (FlurlHttpException httpException) when (httpException.Call.HttpStatus.HasValue &&
-                                                           httpException.Call.HttpStatus.Value ==
-                                                           HttpStatusCode.Unauthorized)
+            catch (FlurlHttpException httpException) when (httpException.Call.HttpStatus.HasValue
+                                                           && httpException.Call.HttpStatus.Value
+                                                           == HttpStatusCode.Unauthorized)
             {
                 return RedirectToAction("AccessDenied", "Authorization");
             }
@@ -142,15 +142,17 @@ namespace ImageGallery.Client.Controllers
             var client = _httpClientFactory.CreateClient("idp_client");
 
             var disco = await client.GetDiscoveryDocumentAsync();
-            if (disco.IsError) throw new Exception(disco.Error, disco.Exception);
-            
+            if (disco.IsError)
+                throw new Exception(disco.Error, disco.Exception);
+
             var accessToken =
                 await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
 
             var response = await client.GetUserInfoAsync(
                 new UserInfoRequest {Address = disco.UserInfoEndpoint, Token = accessToken});
 
-            if (response.IsError) throw new Exception(response.Error, response.Exception);
+            if (response.IsError)
+                throw new Exception(response.Error, response.Exception);
 
             var address = response.Claims.FirstOrDefault(c => c.Type == "address")?.Value;
             return View(new OrderFrameViewModel(address));
@@ -174,6 +176,60 @@ namespace ImageGallery.Client.Controllers
 
         public async Task Logout()
         {
+            // get the metadata
+            var client = _httpClientFactory.CreateClient("idp_client");
+            var disco = await client.GetDiscoveryDocumentAsync();
+            if (disco.IsError)
+                throw new Exception(disco.Error, disco.Exception);
+
+            // get the access token to revoke
+            var accessToken = await HttpContext
+                .GetTokenAsync(OpenIdConnectParameterNames.AccessToken)
+                .ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                var revokeAccessTokenResponse = await client.RevokeTokenAsync(
+                    new TokenRevocationRequest
+                    {
+                        Address = disco.RevocationEndpoint,
+                        ClientId = "imagegalleryclient",
+                        ClientSecret = "secret",
+                        Token = accessToken
+                    });
+
+                if (revokeAccessTokenResponse.IsError)
+                {
+                    throw new Exception(
+                        revokeAccessTokenResponse.Error,
+                        revokeAccessTokenResponse.Exception);
+                }
+            }
+            
+            // revoke the refresh token as well
+            var refreshToken = await HttpContext
+                .GetTokenAsync(OpenIdConnectParameterNames.RefreshToken)
+                .ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+            {
+                var revokeRefreshTokenResponse = await client.RevokeTokenAsync(
+                    new TokenRevocationRequest
+                    {
+                        Address = disco.RevocationEndpoint,
+                        ClientId = "imagegalleryclient",
+                        ClientSecret = "secret",
+                        Token = refreshToken
+                    });
+
+                if (revokeRefreshTokenResponse.IsError)
+                {
+                    throw new Exception(
+                        revokeRefreshTokenResponse.Error,
+                        revokeRefreshTokenResponse.Exception);
+                }
+            }
+
             // Clears the local cookie ("Cookies" must match name from scheme)
             await HttpContext.SignOutAsync("Cookies");
             await HttpContext.SignOutAsync("oidc");
