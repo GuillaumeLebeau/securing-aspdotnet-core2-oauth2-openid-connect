@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IdentityModel.Tokens.Jwt;
 
+using Flurl.Http.Configuration;
+
 using IdentityModel;
 
 using ImageGallery.Client.Services;
@@ -54,9 +56,6 @@ namespace ImageGallery.Client
             // HttpContext in services by injecting it
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-            services.AddSingleton(
-                Configuration.GetSection("ImageGalleryApi").Get<ImageGalleryApiClientSettings>());
-
             // register an IImageGalleryApiClient
             services.AddScoped<IImageGalleryApiClient, ImageGalleryApiClient>();
 
@@ -64,6 +63,11 @@ namespace ImageGallery.Client
             services.AddHttpClient(
                 "idp_client",
                 client => client.BaseAddress = new Uri(Configuration.GetValue<string>("IdpUrl")));
+
+            services.AddHttpClient(
+                "api_client",
+                client => client.BaseAddress =
+                    new Uri(Configuration.GetValue<string>("ImageGalleryApiUrl")));
 
             services.AddAuthentication(options =>
                 {
@@ -88,6 +92,7 @@ namespace ImageGallery.Client
                     options.Scope.Add("subscriptionlevel");
                     options.Scope.Add("country");
                     options.Scope.Add("imagegalleryapi");
+                    options.Scope.Add("offline_access");
                     options.SaveTokens = true;
                     options.ClientSecret = "secret";
                     options.GetClaimsFromUserInfoEndpoint = true;

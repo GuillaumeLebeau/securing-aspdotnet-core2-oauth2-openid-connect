@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Client + API + IDP" type="CompoundRunConfigurationType">
+    <toRun name="ImageGallery.Client" type="LaunchSettings" />
     <toRun name="ImageGallery.API" type="LaunchSettings" />
     <toRun name="Marvin.IDP" type="LaunchSettings" />
-    <toRun name="ImageGallery.Client" type="LaunchSettings" />
     <method v="2" />
   </configuration>
 </component>

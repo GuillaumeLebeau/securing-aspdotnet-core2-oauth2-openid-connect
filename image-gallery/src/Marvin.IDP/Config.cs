@@ -75,6 +75,9 @@ namespace Marvin.IDP
                 //IdentityTokenLifetime = ...
                 //AuthorizationCodeLifetime = = ...
                 AccessTokenLifetime = 120,
+                AllowOfflineAccess = true,
+                //AbsoluteRefreshTokenLifetime = ...
+                UpdateAccessTokenClaimsOnRefresh = true,
                 RedirectUris = new List<string> {"https://localhost:5003/signin-oidc"},
                 PostLogoutRedirectUris =
                     new List<string> {"https://localhost:5003/signout-callback-oidc"},
