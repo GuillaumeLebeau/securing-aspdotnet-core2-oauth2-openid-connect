@@ -65,7 +65,7 @@ namespace ImageGallery.API.Controllers
 
         // POST api/images
         [HttpPost]
-        [Authorize(Roles = "PayingUser")]
+        [Authorize("CanAddImage")]
         public IActionResult CreateImage([FromBody] ImageForCreation imageForCreation)
         {
             if (imageForCreation == null)

@@ -50,6 +50,9 @@ namespace ImageGallery.Client
                             policyBuilder.RequireClaim("country", "be");
                             policyBuilder.RequireClaim("subscriptionlevel", "PayingUser");
                         });
+                    
+                    options.AddPolicy("CanAddImage",
+                        policyBuilder => { policyBuilder.RequireAuthenticatedUser(); });
                 });
 
             // register an IHttpContextAccessor so we can access the current

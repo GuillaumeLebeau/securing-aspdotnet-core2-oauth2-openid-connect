@@ -89,7 +89,7 @@ namespace ImageGallery.Client.Controllers
             return RedirectToAction("Index");
         }
 
-        [Authorize(Roles = "PayingUser")]
+        [Authorize("CanAddImage")]
         public IActionResult AddImage()
         {
             return View();
@@ -97,7 +97,7 @@ namespace ImageGallery.Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "PayingUser")]
+        [Authorize("CanAddImage")]
         public async Task<IActionResult> AddImage(AddImageViewModel addImageViewModel)
         {
             if (!ModelState.IsValid)
@@ -135,8 +135,7 @@ namespace ImageGallery.Client.Controllers
                 });
         }
 
-        // [Authorize(Roles = "PayingUser")]
-        [Authorize(Policy = "CanOrderFrame")]
+        [Authorize("CanOrderFrame")]
         public async Task<IActionResult> OrderFrame()
         {
             var client = _httpClientFactory.CreateClient("idp_client");

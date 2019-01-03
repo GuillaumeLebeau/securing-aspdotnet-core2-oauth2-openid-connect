@@ -33,11 +33,17 @@ namespace ImageGallery.API
             services.AddAuthorization(
                 options =>
                 {
-                    options.AddPolicy("MustOwnImage", policyBuilder =>
+                    options.AddPolicy(
+                        "MustOwnImage",
+                        policyBuilder =>
                         {
                             policyBuilder.RequireAuthenticatedUser();
                             policyBuilder.AddRequirements(new MustOwnImageRequirement());
                         });
+                    
+                    options.AddPolicy(
+                        "CanAddImage",
+                        policyBuilder => { policyBuilder.RequireAuthenticatedUser(); });
                 });
 
             services.AddScoped<IAuthorizationHandler, MustOwnImageHandler>();
@@ -50,14 +56,13 @@ namespace ImageGallery.API
                         options.ApiName = "imagegalleryapi";
                         options.ApiSecret = "apisecret";
                     });
-            
 
             var connection = Configuration.GetConnectionString("ImageGalleryDBConnectionString");
             services.AddDbContext<GalleryContext>(o => o.UseSqlServer(connection));
-            
+
             // register the repository
             services.AddScoped<IGalleryRepository, GalleryRepository>();
-            
+
             // register AutoMapper
             services.AddAutoMapper();
         }
@@ -74,11 +79,11 @@ namespace ImageGallery.API
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-            
+
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
-            
+
             app.UseStaticFiles();
             app.UseMvc();
         }
