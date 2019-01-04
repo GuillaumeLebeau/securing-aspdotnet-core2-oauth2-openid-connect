@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Security.Claims;
+
 using AutoMapper;
 using ImageGallery.API.Services;
 using ImageGallery.Model;
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 
@@ -11,6 +16,7 @@ namespace ImageGallery.API.Controllers
 {
     [Route("api/images")]
     [ApiController]
+    [Authorize]
     public class ImagesController : ControllerBase
     {
         private readonly IGalleryRepository _galleryRepository;
@@ -28,8 +34,10 @@ namespace ImageGallery.API.Controllers
         [HttpGet]
         public IActionResult GetImages()
         {
+            var ownerId = User.FindFirstValue("sub");
+            
             // get from repo
-            var imagesFromRepo = _galleryRepository.GetImages();
+            var imagesFromRepo = _galleryRepository.GetImages(ownerId);
 
             // map to model
             var imagesToReturn = _mapper.Map<IEnumerable<Image>>(imagesFromRepo);
@@ -40,6 +48,7 @@ namespace ImageGallery.API.Controllers
         
         // GET api/images/{id}
         [HttpGet("{id}", Name = "GetImage")]
+        [Authorize("MustOwnImage")]
         public IActionResult GetImage(Guid id)
         {          
             var imageFromRepo = _galleryRepository.GetImage(id);
@@ -56,6 +65,7 @@ namespace ImageGallery.API.Controllers
 
         // POST api/images
         [HttpPost]
+        [Authorize(Roles = "PayingUser")]
         public IActionResult CreateImage([FromBody] ImageForCreation imageForCreation)
         {
             if (imageForCreation == null)
@@ -94,6 +104,10 @@ namespace ImageGallery.API.Controllers
             // ownerId should be set - can't save image in starter solution, will
             // be fixed during the course
             //imageEntity.OwnerId = ...;
+            
+            // set the ownerId on the imageEntity
+            var ownerId = User.FindFirstValue("sub");
+            imageEntity.OwnerId = ownerId;
 
             // add and save.  
             _galleryRepository.AddImage(imageEntity);
@@ -112,6 +126,7 @@ namespace ImageGallery.API.Controllers
 
         // DELETE api/images/{id}
         [HttpDelete("{id}")]
+        [Authorize("MustOwnImage")]
         public IActionResult DeleteImage(Guid id)
         {
             var imageFromRepo = _galleryRepository.GetImage(id);
@@ -133,6 +148,7 @@ namespace ImageGallery.API.Controllers
 
         // PUT api/images/{id}
         [HttpPut("{id}")]
+        [Authorize("MustOwnImage")]
         public IActionResult UpdateImage(Guid id, [FromBody] ImageForUpdate imageForUpdate)
         {
             if (imageForUpdate == null)
@@ -143,7 +159,7 @@ namespace ImageGallery.API.Controllers
             if (!ModelState.IsValid)
             {
                 // return 422 - Unprocessable Entity when validation fails
-                return new UnprocessableEntityObjectResult(ModelState);
+                return UnprocessableEntity(ModelState);
             }
 
             var imageFromRepo = _galleryRepository.GetImage(id);

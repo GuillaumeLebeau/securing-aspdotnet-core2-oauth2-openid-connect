@@ -2,28 +2,54 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
+
+using Flurl.Http;
+
+using IdentityModel.Client;
+
 using ImageGallery.Client.Models;
 using ImageGallery.Client.Services;
 using ImageGallery.Model;
+
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace ImageGallery.Client.Controllers
 {
+    [Authorize]
     public class GalleryController : Controller
     {
         private readonly IImageGalleryApiClient _imageGalleryApiClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public GalleryController(IImageGalleryApiClient imageGalleryApiClient)
+        public GalleryController(IImageGalleryApiClient imageGalleryApiClient,
+            IHttpClientFactory httpClientFactory)
         {
             _imageGalleryApiClient = imageGalleryApiClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<IActionResult> Index()
         {
-            var images = await _imageGalleryApiClient.GetImages().ConfigureAwait(false);
-            var galleryIndexViewModel = new GalleryIndexViewModel(images);
-            return View(galleryIndexViewModel);
+            await WriteOutIdentityInformation();
+
+            try
+            {
+                var images = await _imageGalleryApiClient.GetImages().ConfigureAwait(false);
+                var galleryIndexViewModel = new GalleryIndexViewModel(images);
+                return View(galleryIndexViewModel);
+            }
+            catch (FlurlHttpException httpException) when (httpException.Call.HttpStatus.HasValue
+                                                           && httpException.Call.HttpStatus.Value
+                                                           == HttpStatusCode.Unauthorized)
+            {
+                return RedirectToAction("AccessDenied", "Authorization");
+            }
         }
 
         public IActionResult Privacy()
@@ -34,11 +60,7 @@ namespace ImageGallery.Client.Controllers
         public async Task<IActionResult> EditImage(Guid id)
         {
             var image = await _imageGalleryApiClient.GetImage(id).ConfigureAwait(false);
-            var editImageViewModel = new EditImageViewModel
-            {
-                Id = image.Id,
-                Title = image.Title
-            };
+            var editImageViewModel = new EditImageViewModel {Id = image.Id, Title = image.Title};
 
             return View(editImageViewModel);
         }
@@ -67,6 +89,7 @@ namespace ImageGallery.Client.Controllers
             return RedirectToAction("Index");
         }
 
+        [Authorize(Roles = "PayingUser")]
         public IActionResult AddImage()
         {
             return View();
@@ -74,6 +97,7 @@ namespace ImageGallery.Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "PayingUser")]
         public async Task<IActionResult> AddImage(AddImageViewModel addImageViewModel)
         {
             if (!ModelState.IsValid)
@@ -104,8 +128,111 @@ namespace ImageGallery.Client.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel
-                {RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier});
+            return View(
+                new ErrorViewModel
+                {
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                });
+        }
+
+        // [Authorize(Roles = "PayingUser")]
+        [Authorize(Policy = "CanOrderFrame")]
+        public async Task<IActionResult> OrderFrame()
+        {
+            var client = _httpClientFactory.CreateClient("idp_client");
+
+            var disco = await client.GetDiscoveryDocumentAsync();
+            if (disco.IsError)
+                throw new Exception(disco.Error, disco.Exception);
+
+            var accessToken =
+                await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
+
+            var response = await client.GetUserInfoAsync(
+                new UserInfoRequest {Address = disco.UserInfoEndpoint, Token = accessToken});
+
+            if (response.IsError)
+                throw new Exception(response.Error, response.Exception);
+
+            var address = response.Claims.FirstOrDefault(c => c.Type == "address")?.Value;
+            return View(new OrderFrameViewModel(address));
+        }
+
+        private async Task WriteOutIdentityInformation()
+        {
+            // get the saved identity token
+            var identityToken =
+                await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.IdToken);
+
+            // write it out
+            Debug.WriteLine($"Identity token: {identityToken}");
+
+            // write out the user claims
+            foreach (var claim in User.Claims)
+            {
+                Debug.WriteLine($"Claim type: {claim.Type} - Claim value: {claim.Value}");
+            }
+        }
+
+        public async Task Logout()
+        {
+            // get the metadata
+            var client = _httpClientFactory.CreateClient("idp_client");
+            var disco = await client.GetDiscoveryDocumentAsync();
+            if (disco.IsError)
+                throw new Exception(disco.Error, disco.Exception);
+
+            // get the access token to revoke
+            var accessToken = await HttpContext
+                .GetTokenAsync(OpenIdConnectParameterNames.AccessToken)
+                .ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                var revokeAccessTokenResponse = await client.RevokeTokenAsync(
+                    new TokenRevocationRequest
+                    {
+                        Address = disco.RevocationEndpoint,
+                        ClientId = "imagegalleryclient",
+                        ClientSecret = "secret",
+                        Token = accessToken
+                    });
+
+                if (revokeAccessTokenResponse.IsError)
+                {
+                    throw new Exception(
+                        revokeAccessTokenResponse.Error,
+                        revokeAccessTokenResponse.Exception);
+                }
+            }
+            
+            // revoke the refresh token as well
+            var refreshToken = await HttpContext
+                .GetTokenAsync(OpenIdConnectParameterNames.RefreshToken)
+                .ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+            {
+                var revokeRefreshTokenResponse = await client.RevokeTokenAsync(
+                    new TokenRevocationRequest
+                    {
+                        Address = disco.RevocationEndpoint,
+                        ClientId = "imagegalleryclient",
+                        ClientSecret = "secret",
+                        Token = refreshToken
+                    });
+
+                if (revokeRefreshTokenResponse.IsError)
+                {
+                    throw new Exception(
+                        revokeRefreshTokenResponse.Error,
+                        revokeRefreshTokenResponse.Exception);
+                }
+            }
+
+            // Clears the local cookie ("Cookies" must match name from scheme)
+            await HttpContext.SignOutAsync("Cookies");
+            await HttpContext.SignOutAsync("oidc");
         }
     }
 }

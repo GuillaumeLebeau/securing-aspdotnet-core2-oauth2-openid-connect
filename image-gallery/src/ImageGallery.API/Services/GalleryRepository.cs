@@ -19,9 +19,9 @@ namespace ImageGallery.API.Services
             Dispose(false);
         }
 
-        public IEnumerable<Image> GetImages()
+        public IEnumerable<Image> GetImages(string ownerId)
         {
-            return _context.Images.OrderBy(i => i.Title).ToList();
+            return _context.Images.Where(i => i.OwnerId == ownerId).OrderBy(i => i.Title).ToList();
         }
 
         public bool IsImageOwner(Guid id, string ownerId)

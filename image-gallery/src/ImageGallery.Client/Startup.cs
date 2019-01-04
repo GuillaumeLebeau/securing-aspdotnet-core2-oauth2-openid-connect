@@ -1,15 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IdentityModel.Tokens.Jwt;
+
+using Flurl.Http.Configuration;
+
+using IdentityModel;
+
 using ImageGallery.Client.Services;
+
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ImageGallery.Client
 {
@@ -18,6 +23,7 @@ namespace ImageGallery.Client
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
         }
 
         public IConfiguration Configuration { get; }
@@ -32,21 +38,78 @@ namespace ImageGallery.Client
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
-
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            
+
+            services.AddAuthorization(
+                options =>
+                {
+                    options.AddPolicy(
+                        "CanOrderFrame", policyBuilder =>
+                        {
+                            policyBuilder.RequireAuthenticatedUser();
+                            policyBuilder.RequireClaim("country", "be");
+                            policyBuilder.RequireClaim("subscriptionlevel", "PayingUser");
+                        });
+                });
+
             // register an IHttpContextAccessor so we can access the current
             // HttpContext in services by injecting it
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             // register an IImageGalleryApiClient
-//            services.AddHttpClient<IImageGalleryApiClient, ImageGalleryApiClient>(client =>
-//            {
-//                client.BaseAddress = new Uri(Configuration.GetValue<string>("ImageGalleryApiUrl"));
-//                client.Timeout = TimeSpan.FromMinutes(1);
-//            });
-            services.AddScoped<IImageGalleryApiClient>(_ =>
-                new ImageGalleryApiClient(Configuration.GetValue<string>("ImageGalleryApiUrl")));
+            services.AddScoped<IImageGalleryApiClient, ImageGalleryApiClient>();
+
+            // register a few required services, one of which will be an implementation of IHttpClientFactory
+            services.AddHttpClient(
+                "idp_client",
+                client => client.BaseAddress = new Uri(Configuration.GetValue<string>("IdpUrl")));
+
+            services.AddHttpClient(
+                "api_client",
+                client => client.BaseAddress =
+                    new Uri(Configuration.GetValue<string>("ImageGalleryApiUrl")));
+
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = "Cookies";
+                    options.DefaultChallengeScheme = "oidc";
+                }).AddCookie("Cookies", options =>
+                {
+                    options.AccessDeniedPath = "/Authorization/AccessDenied";
+                })
+                .AddOpenIdConnect("oidc", options =>
+                {
+                    options.SignInScheme = "Cookies";
+                    options.Authority = "https://localhost:5005";
+                    options.ClientId = "imagegalleryclient";
+                    options.ResponseType = "code id_token";
+                    //options.CallbackPath = new PathString("...");
+                    //options.SignedOutCallbackPath = new PathString("...");
+                    options.Scope.Add("openid");
+                    options.Scope.Add("profile");
+                    options.Scope.Add("address");
+                    options.Scope.Add("roles");
+                    options.Scope.Add("subscriptionlevel");
+                    options.Scope.Add("country");
+                    options.Scope.Add("imagegalleryapi");
+                    options.Scope.Add("offline_access");
+                    options.SaveTokens = true;
+                    options.ClientSecret = "secret";
+                    options.GetClaimsFromUserInfoEndpoint = true;
+                    options.ClaimActions.Remove("amr");
+                    options.ClaimActions.DeleteClaim("sid");
+                    options.ClaimActions.DeleteClaim("idp");
+                    // options.ClaimActions.DeleteClaim("address");
+                    options.ClaimActions.MapUniqueJsonKey("role", "role");
+                    options.ClaimActions.MapUniqueJsonKey("subscriptionlevel", "subscriptionlevel");
+                    options.ClaimActions.MapUniqueJsonKey("country", "country");
+                    
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        NameClaimType = JwtClaimTypes.GivenName,
+                        RoleClaimType = JwtClaimTypes.Role
+                    };
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -64,6 +127,9 @@ namespace ImageGallery.Client
             }
 
             app.UseHttpsRedirection();
+
+            app.UseAuthentication();
+            
             app.UseStaticFiles();
             app.UseCookiePolicy();
 
