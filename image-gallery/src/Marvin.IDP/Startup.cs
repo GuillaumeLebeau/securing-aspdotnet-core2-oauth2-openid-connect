@@ -18,23 +18,25 @@ namespace Marvin.IDP
         {
             Configuration = configuration;
         }
-        
+
         public IConfiguration Configuration { get; }
-        
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
 
-            services.AddAuthentication()
-                .AddGoogle(
+            var authenticationBuilder = services.AddAuthentication();
+
+            if (Configuration.GetValue<bool>("Authentication:Google:Enabled"))
+            {
+                authenticationBuilder.AddGoogle(
                     GoogleDefaults.AuthenticationScheme,
                     o =>
                     {
-                        o.SignInScheme =
-                            IdentityServerConstants.ExternalCookieAuthenticationScheme;
-                        
+                        o.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+
                         // Create the app in Google API Console
                         // https://docs.microsoft.com/en-us/aspnet/core/security/authentication/social/google-logins?view=aspnetcore-2.2
                         //
@@ -47,8 +49,9 @@ namespace Marvin.IDP
                         // > dotnet user-secrets list
                         o.ClientId = Configuration["Authentication:Google:ClientId"];
                         o.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
-                        
-                        o.UserInformationEndpoint = "https://openidconnect.googleapis.com/v1/userinfo";
+
+                        o.UserInformationEndpoint =
+                            "https://openidconnect.googleapis.com/v1/userinfo";
                         o.ClaimActions.Clear();
                         o.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
                         o.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
@@ -57,13 +60,18 @@ namespace Marvin.IDP
                         o.ClaimActions.MapJsonKey("urn:google:profile", "profile");
                         o.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
                         o.ClaimActions.MapJsonKey("urn:google:image", "picture");
-                    })
-                .AddMicrosoftAccount(MicrosoftAccountDefaults.AuthenticationScheme,
+                    });
+            }
+
+            if (Configuration.GetValue<bool>("Authentication:Microsoft:Enabled"))
+            {
+                authenticationBuilder.AddMicrosoftAccount(
+                    MicrosoftAccountDefaults.AuthenticationScheme,
                     options =>
                     {
-                        options.SignInScheme = 
+                        options.SignInScheme =
                             IdentityServerConstants.ExternalCookieAuthenticationScheme;
-                        
+
                         // Create the app in Microsoft Developer Portal
                         // https://docs.microsoft.com/en-us/aspnet/core/security/authentication/social/microsoft-logins?view=aspnetcore-2.2
                         //
@@ -77,7 +85,8 @@ namespace Marvin.IDP
                         options.ClientId = Configuration["Authentication:Microsoft:ApplicationId"];
                         options.ClientSecret = Configuration["Authentication:Microsoft:Password"];
                     });
-            
+            }
+
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
                 .AddTestUsers(Config.GetUsers())
