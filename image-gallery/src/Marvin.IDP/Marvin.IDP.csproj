@@ -12,4 +12,17 @@
         <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\css\bootstrap.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\css\bootstrap.css.map" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\css\bootstrap.min.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\fonts\glyphicons-halflings-regular.eot" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\fonts\glyphicons-halflings-regular.svg" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\fonts\glyphicons-halflings-regular.ttf" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\fonts\glyphicons-halflings-regular.woff" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\fonts\glyphicons-halflings-regular.woff2" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\js\bootstrap.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\bootstrap\js\bootstrap.min.js" />
+    </ItemGroup>
+
 </Project>

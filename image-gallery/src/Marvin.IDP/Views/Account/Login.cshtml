@@ -41,7 +41,7 @@
                                 }
                                 <div class="form-group">
                                     <button class="btn btn-primary" name="button" value="login">Login</button>
-                                    <button class="btn btn-default" name="button" value="cancel">Cancel</button>
+                                    <button class="btn btn-secondary" name="button" value="cancel">Cancel</button>
                                 </div>
                             </fieldset>
                         </form>
@@ -62,7 +62,7 @@
                             @foreach (var provider in Model.VisibleExternalProviders)
                             {
                                 <li>
-                                    <a class="btn btn-default"
+                                    <a class="btn btn-secondary"
                                        asp-controller="External"
                                        asp-action="Challenge"
                                        asp-route-provider="@provider.AuthenticationScheme"
